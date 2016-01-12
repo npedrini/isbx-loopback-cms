@@ -9,10 +9,11 @@ angular.module('dashboard.services.FileUpload', [
 
   var self = this;
   
-  this.getS3Credentials = function(path, fileType) {
+  this.getS3Credentials = function(path, fileType, fileName) {
     var params = {
         access_token: $cookies.accessToken,
         path: path,
+        fileName: fileName,
         fileType: fileType
     };
     return Utils.apiHelper('GET', Config.serverParams.cmsBaseUrl + '/aws/s3/credentials', params);
@@ -24,8 +25,8 @@ angular.module('dashboard.services.FileUpload', [
       AWSAccessKeyId: credentials.AWSAccessKeyId, 
       acl: "public-read", // sets the access to the uploaded file in the bucker: private or public 
       policy: credentials.policy, // base64-encoded json policy (see article below)
-      signature: credentials.signature, // base64-encoded signature based on policy string (see article below)
-      //"Content-Type": file.type != '' ? file.type : 'application/octet-stream', // content type of the file (NotEmpty),
+      signature: credentials.signature, // base64-encoded signature bas ed on policy string (see article below)
+      "Content-Type": credentials["Content-Type"] != '' ? credentials["Content-Type"] : 'application/octet-stream', // content type of the file (NotEmpty),
       success_action_status: "201",
       "Cache-Control": "max-age=31536000"
       //filename:  credentials.uniqueFilePath // this is needed for Flash polyfill IE8-9
@@ -44,10 +45,9 @@ angular.module('dashboard.services.FileUpload', [
     } else if (file.name) {
       fileType = self.detectMimeTypeByExt(file.name);
     }
-
     //Get S3 credentials from Server
     var deferred = $q.defer();
-    self.getS3Credentials(path, fileType ? fileType : "").then(function(credentials) {
+    self.getS3Credentials(path, fileType ? fileType : "", null).then(function(credentials) {
       $upload.upload({
         url: credentials.uploadUrl, //S3 upload url including bucket name,
         method: 'POST',
@@ -96,6 +96,7 @@ angular.module('dashboard.services.FileUpload', [
 
   
   var uploadFilePath = null;
+  var uploadFileName = null;
   this.uploadImages = function(imageFiles) {
     //Try to get index, results, and deferred objects from recursion
     //otherwise init the variables 
@@ -126,6 +127,7 @@ angular.module('dashboard.services.FileUpload', [
       
       if (imageFiles[fileIndex] && imageFiles[fileIndex].file) {
         uploadFilePath = imageFiles[fileIndex].path;
+        uploadFileName = imageFiles[fileIndex].name;
         file = imageFiles[fileIndex].file;
       } else {
         file = imageFiles[fileIndex];
@@ -143,6 +145,7 @@ angular.module('dashboard.services.FileUpload', [
       fileKey = fileKeys[fileIndex];
       var exports = imageFiles[fileKey].file ? imageFiles[fileKey].file : imageFiles[fileKey];
       if (imageFiles[fileKey].path) uploadFilePath = imageFiles[fileKey].path;
+      if (imageFiles[fileKey].filename) uploadFileName = imageFiles[fileKey].name;
       if (exports && exports.type && exports.size) {
         //exports is a file object
         if (exportIndex > 0) {
@@ -166,6 +169,7 @@ angular.module('dashboard.services.FileUpload', [
         exportKey = exportKeys[exportIndex];
         if (exports[exportKey] && exports[exportKey].file) {
           uploadFilePath = exports[exportKey].path;
+          uploadFileName = exports[exportKey].name;
           file = exports[exportKey].file;
         } else {
           file = exports[exportKey];
@@ -212,7 +216,7 @@ angular.module('dashboard.services.FileUpload', [
     }
     
     //Get S3 credentials from Server
-    self.getS3Credentials(uploadFilePath, file.type).then(function(credentials) {
+    self.getS3Credentials(uploadFilePath, file.type, uploadFileName).then(function(credentials) {
       $upload.upload({
         url: credentials.uploadUrl, //S3 upload url including bucket name,
         method: 'POST',
@@ -489,6 +493,7 @@ angular.module('dashboard.services.FileUpload', [
           'mime': 'message/rfc822',
           'mjf': 'audio/x-vnd.audioexplosion.mjuicemediafile',
           'mjpg': 'video/x-motion-jpeg',
+          'm4v': 'video/mp4',
           'mm': 'application/base64',
           'mme': 'application/base64',
           'mod': 'audio/mod',
@@ -497,6 +502,7 @@ angular.module('dashboard.services.FileUpload', [
           'movie': 'video/x-sgi-movie',
           'mp2': 'audio/mpeg',
           'mp3': 'audio/mpeg3',
+          'mp4': 'video/mp4',
           'mpa': 'audio/mpeg',
           'mpc': 'application/x-project',
           'mpe': 'video/mpeg',
@@ -523,6 +529,7 @@ angular.module('dashboard.services.FileUpload', [
           'nvd': 'application/x-navidoc',
           'o': 'application/octet-stream',
           'oda': 'application/oda',
+          'ogv': 'video/ogg',
           'omc': 'application/x-omc',
           'omcd': 'application/x-omcdatamaker',
           'omcr': 'application/x-omcregerator',
@@ -695,6 +702,7 @@ angular.module('dashboard.services.FileUpload', [
           'wb1': 'application/x-qpro',
           'wbmp': 'image/vnd.wap.wbmp',
           'web': 'application/vnd.xara',
+          'webm': 'video/webm',
           'wiz': 'application/msword',
           'wk1': 'application/x-123',
           'wmf': 'windows/metafile',

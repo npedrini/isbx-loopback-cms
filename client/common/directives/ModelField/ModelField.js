@@ -95,6 +95,14 @@ angular.module('dashboard.directives.ModelField', [
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
         break;
+      case 'video':
+        // depends on directive modelFieldImageEdit
+        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label> \
+          <div class="col-sm-10"> \
+            <model-field-video-edit key="key" options="display.options" disabled="display.readonly" model-data="data" ng-model="data[key]" class="field" /> \
+            <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
+          </div>';
+        break;
       case 'datetime':
         template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label> \
           <div class="col-sm-10"> \

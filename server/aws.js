@@ -35,7 +35,7 @@ var awsConfig;
  * @param fileType
  *  The MIME type of the file being uploaded and must be defined in the config.json under private.asws.s3.path[path][fileType]
  */
-function getS3Credentials(path, fileType, callback) {
+function getS3Credentials(path, fileType, fileName, callback) {
   var acceptableFileTypes = awsConfig.s3.path[path];
   if (!acceptableFileTypes) {
     callback({error: "Invalid path value"});
@@ -59,7 +59,7 @@ function getS3Credentials(path, fileType, callback) {
                        { acl: "public-read" },
                        { success_action_status: "201" },
                        ["starts-with", "$key", path + "/"],
-                       //["starts-with", "$Content-Type", fileType],
+                       ["starts-with", "$Content-Type", ""],
                        ["starts-with", "$Cache-Control", "max-age=31536000"], // 1 year
                        ["content-length-range", 0, maxFileSize]
           ]
@@ -70,10 +70,21 @@ function getS3Credentials(path, fileType, callback) {
   var hash2 = hmac.update(base64Policy);
   var signature = hmac.digest(encoding="base64");
   var uploadUrl = awsConfig.s3.uploadUrl ? awsConfig.s3.uploadUrl : "https://"+awsConfig.s3.bucket+".s3.amazonaws.com";
+  var uniqueId = uuid.v1();
+  var uniqueFilePath = path + "/" + uuid.v1() + "." + fileExtension;
+  if(fileName){
+    if(/\{\{ext\}\}/.test(fileName)) {
+      fileName = fileName.replace(/\{\{ext\}\}/,fileExtension);
+    } else {
+      fileName += "." + fileExtension;
+    }
+    fileName = fileName.replace(/\{\{uuid\}\}/,uniqueId);
+    uniqueFilePath = path + "/" + fileName;
+  }
   var credentials = {
           uploadUrl: uploadUrl,
           expirationDate: expirationDate,
-          uniqueFilePath: path + "/" + uuid.v1() + "." + fileExtension,
+          uniqueFilePath: uniqueFilePath,
           AWSAccessKeyId: awsConfig.accessKeyId,
           success_action_status: "201",
           "Content-Type": fileType,
@@ -87,7 +98,7 @@ module.exports = {
   setConfig: function(config) {
     awsConfig = config.aws;
   },
-  getS3Credentials: function(cmsKey, fileExtension, callback) {
-    getS3Credentials(cmsKey, fileExtension, callback);
+  getS3Credentials: function(cmsKey, fileExtension, fileName, callback) {
+    getS3Credentials(cmsKey, fileExtension, fileName, callback);
   }
 };

@@ -348,7 +348,7 @@ function cms(loopbackApplication, options) {
    */
   app.get('/aws/s3/credentials', function(req, res) {
     //TODO: validate access token
-    aws.getS3Credentials(req.query["path"], req.query["fileType"], function(error, credentials) {
+    aws.getS3Credentials(req.query["path"], req.query["fileType"], req.query["fileName"], function(error, credentials) {
       if (error) {
         res.status(500).send(error);
       }

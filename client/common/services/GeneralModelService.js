@@ -138,6 +138,27 @@ angular.module('dashboard.services.GeneralModel', [
       }
     };
 
+    var uploadVideos = function(callback) {
+      if (data.__ModelFieldVideoData) {
+        deferred.notify({message: "Uploading video file(s)", progress: 0});
+
+        //First Upload Images and set Image Meta Data
+        FileUploadService.uploadImages(data.__ModelFieldVideoData)
+          .then(function(result) {
+            self.assignImageFileMetaData(modelDef, data, result);
+            deferred.notify({message: "Saving...", progress: 0});
+            callback();
+          }, function(error) {
+            console.log(error);
+            deferred.reject(error);
+          }, function(progress) {
+            deferred.notify({progress: progress});
+          });
+      } else {
+        callback();
+      }
+    };
+
     var uploadFiles = function(callback) {
       //Uploading Non-Image Files (Look for fields with file type to upload in data)
       var index = 0;
@@ -175,16 +196,18 @@ angular.module('dashboard.services.GeneralModel', [
     };
 
     uploadImages(function() {
-      uploadFiles(function() {
-        //Loop through fields and check for forced default fields
-        self.checkDefaultValues(modelDef, data);
-        self.save(model, id, data).then(
-          function(result) {
-            deferred.resolve(result);
-          },
-          function(error) {
-            deferred.reject(error);
-          });
+      uploadVideos(function() {
+        uploadFiles(function() {
+          //Loop through fields and check for forced default fields
+          self.checkDefaultValues(modelDef, data);
+          self.save(model, id, data).then(
+            function(result) {
+              deferred.resolve(result);
+            },
+            function(error) {
+              deferred.reject(error);
+            });
+        });
       });
     });
 
