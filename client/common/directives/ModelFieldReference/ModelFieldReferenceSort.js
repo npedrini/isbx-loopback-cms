@@ -120,6 +120,7 @@ angular.module('dashboard.directives.ModelFieldReferenceSort', [
           if (scope.options.api) apiPath = replaceSessionVariables(scope.options.api);
           GeneralModelService.list(apiPath, params).then(function(response) {
             if (!response) return; //in case http request was cancelled by newer request
+            if (scope.options.resultField && scope.options.hasOwnProperty('resultField')) response = response[scope.options.resultField];
             scope.list = response;
             //Remove items already selected
             for (var i in scope.selectedList) {

@@ -123,6 +123,7 @@ angular.module('dashboard.directives.ModelFieldReference', [
           if (scope.options.api) apiPath = replaceSessionVariables(scope.options.api);
           GeneralModelService.list(apiPath, params).then(function(response) {
             if (!response) return; //in case http request was cancelled by newer request
+            if (scope.options.resultField && scope.options.hasOwnProperty('resultField')) response = response[scope.options.resultField];
             scope.list = response;
             if (scope.options.allowInsert) {
               var addNewItem = {};
@@ -179,6 +180,7 @@ angular.module('dashboard.directives.ModelFieldReference', [
                 apiPath = replaceSessionVariables(scope.options.api);
                 GeneralModelService.list(apiPath, params).then(function(response) {
                   if (!response) return;  //in case http request was cancelled
+                  if (scope.options.resultField && scope.options.hasOwnProperty('resultField')) response = response[scope.options.resultField];
                   scope.selected.items = response;
                   scope.list = response;
                 });
